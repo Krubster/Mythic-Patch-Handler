@@ -29,7 +29,7 @@ namespace MYPHandler
         private long error_ExtractionNumber = 0;
         private long numExtractedFiles = 0;
         private int numOfFileInExtractionList = 0;
-        protected PerformanceCounter ramCounter = new PerformanceCounter("Process", "Private Bytes", Process.GetCurrentProcess().ProcessName);
+        protected PerformanceCounter ramCounter;
         private int garbageRuns = 0;
         private HashDictionary hashDictionary;
         public FileStream archiveStream;
@@ -121,6 +121,15 @@ namespace MYPHandler
 
         public MYPHandler(string filename, del_FileTableEventHandler eventHandler_FileTable, del_FileEventHandler eventHandler_Extraction, HashDictionary hashDic)
         {
+            // Try to set ramCounter to the performance counter but if it fails set it to null to default getUsedRAM() to 0
+            try
+            {
+                ramCounter = new PerformanceCounter("Process", "Private Bytes", Process.GetCurrentProcess().ProcessName);
+            }
+            catch
+            {
+                ramCounter = null;
+            }
             this.hashDictionary = hashDic;
             if (eventHandler_Extraction != null)
                 this.event_Extraction += eventHandler_Extraction;
@@ -569,7 +578,10 @@ namespace MYPHandler
 
         private float getUsedRAM()
         {
-            return this.ramCounter.NextValue();
+            if (this.ramCounter == null)
+                return 0;
+            else
+                return this.ramCounter.NextValue();
         }
 
         private void ExtractFile(FileInArchive archFile)
